@@ -8,7 +8,12 @@ import "./notification/cronReminder.js"
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 
 const PORT =process.env.PORT || 7000;
 const URL = process.env.MONGOURL;

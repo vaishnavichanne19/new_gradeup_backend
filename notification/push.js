@@ -12,15 +12,11 @@ webpush.setVapidDetails(
 
 export const saveSubscription = async (sub) => {
   const exists = await PushModel.findOne({ endpoint: sub.endpoint });
-  if (!exists) {
-    await PushModel.create(sub);
-  }
+  if (!exists) await PushModel.create(sub);
 };
-
 
 export const sendPush = async (title, message) => {
   const payload = JSON.stringify({ title, body: message });
-
   const subs = await PushModel.find();
 
   for (const sub of subs) {
@@ -31,4 +27,3 @@ export const sendPush = async (title, message) => {
     }
   }
 };
-

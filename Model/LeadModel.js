@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const leadSchema = new mongoose.Schema(
   {
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "login",
+        required: true,
+    },
     area: { type: String, required: true },
     companyname: { type: String, required: true },
     companyphone: { type: Number },
@@ -16,7 +21,6 @@ const leadSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
     marketingType: {
       type: String,
       enum: ["All", "Product", "Service"],

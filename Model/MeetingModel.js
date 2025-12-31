@@ -2,6 +2,17 @@ import mongoose from "mongoose";
 
 const meetingSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "login",
+      required: true,
+    },
+
+    leadId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "LeadData",
+      required: true,
+    },
     tution_name: {
       type: String,
       required: true,
@@ -67,13 +78,13 @@ const meetingSchema = new mongoose.Schema(
 );
 
 const pushSchema = new mongoose.Schema({
-  endpoint: String,
+  endpoint: { type: String, unique: true },
   keys: {
     p256dh: String,
     auth: String,
   },
 });
 
-export const PushModel = mongoose.model("PushSub", pushSchema);
+export const PushModel = mongoose.model("PushSubscription", pushSchema);
 export const MeetingDataModule = mongoose.model("Meeting", meetingSchema);
 

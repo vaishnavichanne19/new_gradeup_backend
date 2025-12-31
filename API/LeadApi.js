@@ -1,4 +1,5 @@
 import { LeadModuleData } from "../Model/LeadModel.js";
+import { MeetingDataModule } from "../Model/MeetingModel.js";
 
 export const createLead = async (req, res) => {
   try {
@@ -24,6 +25,7 @@ export const createLead = async (req, res) => {
       customDomain: domain === "Other" ? customDomain : "",
       marketingType,
       marketingOptions,
+      userId: req.userId,
     });
 
     if (!LeadId) {
@@ -40,7 +42,7 @@ export const createLead = async (req, res) => {
 
 export const GetLead = async (req, res) => {
   try {
-    const Leads = await LeadModuleData.find();
+    const Leads = await LeadModuleData.find({userId: req.userId}).sort({ created_at: -1 });
 
     if (!Leads || Leads.length === 0) {
       return res.status(404).json({ msg: "Data Not Found" });
@@ -52,11 +54,29 @@ export const GetLead = async (req, res) => {
   }
 };
 
+export const GetAllUserLead = async (req, res) => {
+  try {
+    const Leads = await LeadModuleData.find()
+    .populate("userId", "username");
+
+    if (!Leads) {
+      return res.status(404).json({ msg: "Data Not Found" });
+    }
+
+    res.status(200).json({success: true, data: Leads});
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching Leads" });
+  }
+};
+
 export const GetLeadId = async (req, res) => {
-  const { id } = req.params;
 
   try {
-    const Lead = await LeadModuleData.findById(id);
+   const Lead = await LeadModuleData.findOne({
+  _id: req.params.id,
+  userId: req.userId,
+});
+
 
     if (!Lead) {
       return res.status(404).json({
@@ -90,14 +110,13 @@ export const updateLead = async (req, res) => {
       });
     }
 
-    // 🔐 SAFE DEFAULTS (CONFUSION YAHI THA)
-    const updateData = {
+ const updateData = {
       ...req.body,
       marketingOptions: req.body.marketingOptions || [],
     };
 
     const updatedLead = await LeadModuleData.findByIdAndUpdate(
-      id,
+     { _id: id, userId: req.userId },
       updateData,
       { new: true }
     );
@@ -119,16 +138,36 @@ export const updateLead = async (req, res) => {
 
 export const deleteLead = async (req, res) => {
   try {
-    const id = req.params.id;
+    const { id } = req.params;
 
-    const deletedLead = await LeadModuleData.findById(id);
+    const lead = await LeadModuleData.findOne({
+      _id: id,
+      userId: req.userId,
+    });
 
-    if (!deletedLead) {
-      return res.status(404).json({ msg: "User data not found" });
+    if (!lead) {
+      return res.status(404).json({ msg: "Lead not found or not authorized" });
     }
-    await LeadModuleData.findByIdAndDelete(id);
-    res.status(200).json({ msg: "user deleted data successfully" });
+
+    // ✅ Delete related meetings
+    await MeetingDataModule.deleteMany({
+      leadId: id,
+      userId: req.userId,
+    });
+
+    // ✅ Delete lead safely
+    await LeadModuleData.findOneAndDelete({
+      _id: id,
+      userId: req.userId,
+    });
+
+    res.status(200).json({
+      success: true,
+      msg: "Lead & all related meetings deleted",
+    });
   } catch (error) {
+    console.error("Delete Lead Error:", error);
     res.status(500).json({ error: "Error deleting Lead" });
   }
 };
+
