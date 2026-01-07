@@ -25,7 +25,7 @@ export const createLead = async (req, res) => {
       customDomain: domain === "Other" ? customDomain : "",
       marketingType,
       marketingOptions,
-      userId: req.userId,
+      userId: req.user.userId,
     });
 
     if (!LeadId) {
@@ -42,7 +42,7 @@ export const createLead = async (req, res) => {
 
 export const GetLead = async (req, res) => {
   try {
-    const Leads = await LeadModuleData.find({userId: req.userId}).sort({ created_at: -1 });
+    const Leads = await LeadModuleData.find({userId: req.user.userId}).sort({ created_at: -1 });
 
     if (!Leads || Leads.length === 0) {
       return res.status(404).json({ msg: "Data Not Found" });
@@ -57,7 +57,7 @@ export const GetLead = async (req, res) => {
 export const GetAllUserLead = async (req, res) => {
   try {
     const Leads = await LeadModuleData.find()
-    .populate("userId", "username");
+    .populate("userId", "username email");
 
     if (!Leads) {
       return res.status(404).json({ msg: "Data Not Found" });
@@ -74,7 +74,7 @@ export const GetLeadId = async (req, res) => {
   try {
    const Lead = await LeadModuleData.findOne({
   _id: req.params.id,
-  userId: req.userId,
+  userId: req.user.userId,
 });
 
 
@@ -116,7 +116,7 @@ export const updateLead = async (req, res) => {
     };
 
     const updatedLead = await LeadModuleData.findByIdAndUpdate(
-     { _id: id, userId: req.userId },
+     { _id: id, userId: req.user.userId },
       updateData,
       { new: true }
     );
@@ -142,7 +142,7 @@ export const deleteLead = async (req, res) => {
 
     const lead = await LeadModuleData.findOne({
       _id: id,
-      userId: req.userId,
+      userId: req.user.userId,
     });
 
     if (!lead) {
@@ -152,13 +152,13 @@ export const deleteLead = async (req, res) => {
     // ✅ Delete related meetings
     await MeetingDataModule.deleteMany({
       leadId: id,
-      userId: req.userId,
+      userId: req.user.userId,
     });
 
     // ✅ Delete lead safely
     await LeadModuleData.findOneAndDelete({
       _id: id,
-      userId: req.userId,
+      userId: req.user.userId,
     });
 
     res.status(200).json({

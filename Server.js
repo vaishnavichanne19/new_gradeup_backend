@@ -1,19 +1,23 @@
-import dotenv from "dotenv"
-dotenv.config();
 import express from "express";
 import cors from "cors";
 import Route from "./Routes/AllRoutes.js";
 import mongoose from "mongoose";
 import "./notification/cronReminder.js"
+import dotenv from "dotenv"
+dotenv.config();
 
 const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: [
+      "http://localhost:3000",
+      "https://salessystem.thecy.in"
+    ],
     credentials: true,
   })
 );
+
 
 const PORT =process.env.PORT || 7000;
 const URL = process.env.MONGOURL;

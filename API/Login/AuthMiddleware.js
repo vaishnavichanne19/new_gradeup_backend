@@ -1,4 +1,6 @@
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv"
+dotenv.config();
 
 const AuthMiddleware = (req, res, next) => {
   try {
@@ -16,7 +18,10 @@ const AuthMiddleware = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-     req.userId = decoded.userId;
+     req.user =  {
+  userId: decoded.userId,
+  email: decoded.email, 
+};
     next();
   } catch (error) {
     console.error("JWT Error:", error.message);

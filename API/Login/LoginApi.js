@@ -1,17 +1,16 @@
 import dotenv from "dotenv";
+dotenv.config();
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { LoginModule } from "../../Model/LoginModel.js";
 
-dotenv.config();
-const JWT_SECRET = process.env.JWT_SECRET;
 
 // REGISTER
 export const Registration = async (req, res) => {
   try {
-    const { username, mobileno, password } = req.body;
+    const { username, email, password } = req.body;
 
-    const existingUser = await LoginModule.findOne({ mobileno });
+    const existingUser = await LoginModule.findOne({ email });
     if (existingUser) {
       return res.status(409).json({
         message: "User already exists, you can login",
@@ -20,7 +19,7 @@ export const Registration = async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    await LoginModule.create({ username, mobileno, password: hashed });
+    await LoginModule.create({ username, email, password: hashed });
 
     res.status(201).json({
       message: "Signup successfully",
@@ -28,6 +27,7 @@ export const Registration = async (req, res) => {
     });
 
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: "Server error",
       success: false
@@ -39,26 +39,25 @@ export const Registration = async (req, res) => {
 // LOGIN
 export const Login = async (req, res) => {
    try {
-  const { mobileno, password } = req.body;
-  const user = await LoginModule.findOne({ mobileno });
-  if (!user) return res.status(400).json({ error: "Mobile No Not Found" });
+  const { email, password } = req.body;
+  const user = await LoginModule.findOne({ email });
+  if (!user) return res.status(400).json({ error: "Email Not Found" });
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) return res.status(400).json({ error: "Incorrect Password" });
 
-  const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: "7d" });
+  const token = jwt.sign({ userId: user._id, email: user.email, }, process.env.JWT_SECRET, { expiresIn: "7d" });
   res.cookie("token", token, {
     httpOnly: true,
     maxAge: 86400000,
-    sameSite: "Lax",
-    secure: false,
+    secure: true,
   });
 
   res.json({
     success: true,
     message: "Logged in",
     token,
-    user: { id: user._id, mobileno: user.mobileno },
+    user: { id: user._id, email: user.email },
   });
    } catch (err) {
     console.error("Login error:", err);
@@ -72,7 +71,7 @@ export const Login = async (req, res) => {
 
 export const getUserProfile = async (req, res) => {
   try {
-    const user = await LoginModule.findById(req.userId).select("-password");
+    const user = await LoginModule.findById(req.user.userId).select("-password");
 
     res.status(200).json({
       success: true,

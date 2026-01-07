@@ -8,6 +8,11 @@ const meetingSchema = new mongoose.Schema(
       required: true,
     },
 
+    userEmail: {
+      type: String,
+      required: true,
+    },
+
     leadId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "LeadData",
@@ -38,6 +43,11 @@ const meetingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    meetingDateTime: {
+      type: Date,
+      required: true,
+      index: true,
+    },
     msg: {
       type: String,
       required: true,
@@ -47,6 +57,9 @@ const meetingSchema = new mongoose.Schema(
       enum: ["scheduled", "rescheduled", "completed", "cancelled"],
       default: "scheduled",
     },
+     emailReminder1DaySent: { type: Boolean, default: false },
+    emailReminder1HourSent: { type: Boolean, default: false },
+
     reschedule: {
       isRescheduled: { type: Boolean, default: false },
       oldDate: Date,
@@ -54,7 +67,11 @@ const meetingSchema = new mongoose.Schema(
       newDate: Date,
       newTime: String,
       reason: String,
+      rescheduleemail1DaySent: { type: Boolean, default: false },
+      rescheduleemail1HourSent: { type: Boolean, default: false },
     },
+    
+    rescheduleDateTime: Date,
 
     followUp: {
       purpose: String,
@@ -66,25 +83,15 @@ const meetingSchema = new mongoose.Schema(
         time: String,
         note: String,
       },
+      followupemail1DaySent: { type: Boolean, default: false },
+      followupemail1HourSent: { type: Boolean, default: false },
     },
-
-    push_1day: { type: Boolean, default: false },
-    push_1hr: { type: Boolean, default: false },
-    push_30min: { type: Boolean, default: false },
+    
+    followUpDateTime: Date,
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: false },
   }
 );
 
-const pushSchema = new mongoose.Schema({
-  endpoint: { type: String, unique: true },
-  keys: {
-    p256dh: String,
-    auth: String,
-  },
-});
-
-export const PushModel = mongoose.model("PushSubscription", pushSchema);
 export const MeetingDataModule = mongoose.model("Meeting", meetingSchema);
-

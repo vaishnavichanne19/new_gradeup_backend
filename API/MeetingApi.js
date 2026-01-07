@@ -1,5 +1,9 @@
 import { MeetingDataModule } from "../Model/MeetingModel.js";
-import { sendPush } from "../notification/push.js";
+import {
+  sendFollowUpEmail,
+  sendMeetingCreatedEmail,
+  sendRescheduleEmail,
+} from "../notification/emailSender.js";
 
 export const CreateMeeting = async (req, res) => {
   try {
@@ -12,12 +16,14 @@ export const CreateMeeting = async (req, res) => {
       marketingType,
       date,
       time,
-      msg
+      msg,
     } = req.body;
 
-     if (!leadId) {
-      return res.status(400).json({ error: "leadId is required" });
+    if (!leadId || !date || !time) {
+      return res.status(400).json({ error: "Required fields missing" });
     }
+
+    const meetingDateTime = new Date(`${date}T${time}:00`);
 
     const meeting = await MeetingDataModule.create({
       leadId,
@@ -28,20 +34,17 @@ export const CreateMeeting = async (req, res) => {
       marketingType,
       date,
       time,
+      meetingDateTime,
       msg,
-     userId: req.userId,
+      userId: req.user.userId,
+      userEmail: req.user.email,
     });
 
-    await sendPush(
-      "New Meeting Scheduled",
-      `Meeting with ${tution_name} on ${new Date(
-        date
-      ).toDateString()} at ${time}`
-    );
+    await sendMeetingCreatedEmail(req.user.email, meeting);
 
     res.status(201).json({
       success: true,
-      message: "Meeting created & notifications sent",
+      message: "Meeting created & email sent",
       data: meeting,
     });
   } catch (error) {
@@ -52,14 +55,15 @@ export const CreateMeeting = async (req, res) => {
 
 export const GetAllUserMeeting = async (req, res) => {
   try {
-    const Meeting = await MeetingDataModule.find()
-    .populate("userId", "username");
-    
+    const Meeting = await MeetingDataModule.find().populate(
+      "userId",
+      "username email"
+    );
+
     if (!Meeting) {
       return res.status(404).json({ msg: "Data Not Found" });
     }
-    res.status(200).json({success: true,
-      data: Meeting});
+    res.status(200).json({ success: true, data: Meeting });
   } catch (error) {
     res.status(500).json({ error: "Error fetching Meetings" });
   }
@@ -68,15 +72,14 @@ export const GetAllUserMeeting = async (req, res) => {
 export const GetMeeting = async (req, res) => {
   try {
     const Meeting = await MeetingDataModule.find({
-    userId: req.userId,
-  })
-    .populate("leadId", "companyname area domain")
-    .sort({ created_at: -1 });
+      userId: req.user.userId,
+    })
+      .populate("leadId", "companyname area domain")
+      .sort({ created_at: -1 });
     if (!Meeting) {
       return res.status(404).json({ msg: "Data Not Found" });
     }
-    res.status(200).json({success: true,
-      data: Meeting});
+    res.status(200).json({ success: true, data: Meeting });
   } catch (error) {
     res.status(500).json({ error: "Error fetching Meetings" });
   }
@@ -86,15 +89,15 @@ export const GetMeetingId = async (req, res) => {
   const id = req.params.id;
 
   try {
-   const MeetingId = await MeetingDataModule.findOne({
-  _id: req.params.id,
-    userId: req.userId,
-});
+    const MeetingId = await MeetingDataModule.findOne({
+      _id: req.params.id,
+      userId: req.user.userId,
+    });
 
     if (!MeetingId) {
       return res.status(404).json({ msg: "user data not found" });
     }
-    res.status(200).json({data: MeetingId});
+    res.status(200).json({ data: MeetingId });
   } catch (error) {
     console.error("Error fetching Meeting:", error);
     res
@@ -114,7 +117,7 @@ export const updateMeeting = async (req, res) => {
     }
 
     const Updatemeetingdata = await MeetingDataModule.findByIdAndUpdate(
-     { _id: req.params.id, userId: req.userId },
+      { _id: req.params.id, userId: req.user.userId },
       req.body,
       { new: true }
     );
@@ -141,8 +144,8 @@ export const DeleteMeeting = async (req, res) => {
       return res.status(404).json({ msg: "User data not found" });
     }
     await MeetingDataModule.findByIdAndDelete({
-       _id: req.params.id,
-    userId: req.userId,
+      _id: req.params.id,
+      userId: req.user.userId,
     });
     res.status(200).json({ msg: "user deleted data successfully" });
   } catch (error) {
@@ -150,71 +153,83 @@ export const DeleteMeeting = async (req, res) => {
   }
 };
 
-
 export const RescheduleMeeting = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { newDate, newTime, reason } = req.body;
+  const { newDate, newTime, reason } = req.body;
 
-    const meeting = await MeetingDataModule.findById(id);
-    if (!meeting) {
-      return res.status(404).json({ msg: "Meeting not found" });
-    }
+  const meeting = await MeetingDataModule.findById(req.params.id);
+  if (!meeting) return res.status(404).json({ msg: "Meeting not found" });
 
-    meeting.reschedule = {
-      isRescheduled: true,
-      oldDate: meeting.date,
-      oldTime: meeting.time,
-      newDate,
-      newTime,
-      reason,
-    };
+  const resDT = new Date(`${newDate}T${newTime}:00`);
 
-    meeting.date = newDate;
-    meeting.time = newTime;
-    meeting.status = "rescheduled";
+  meeting.reschedule = {
+    isRescheduled: true,
+    oldDate: meeting.date,
+    oldTime: meeting.time,
+    newDate,
+    newTime,
+    reason,
+    rescheduleemail1DaySent: false,
+    rescheduleemail1HourSent: false,
+  };
 
-    await meeting.save();
+  meeting.date = newDate;
+  meeting.time = newTime;
+  meeting.meetingDateTime = resDT;
+  meeting.rescheduleDateTime = resDT;
+  meeting.emailReminder1DaySent = false;
+  meeting.emailReminder1HourSent = false;
+  meeting.status = "rescheduled";
 
-    res.json({
-      success: true,
-      message: "Meeting rescheduled successfully",
-      data: meeting,
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
-  }
+
+  await meeting.save();
+  await sendRescheduleEmail(meeting.userEmail, meeting);
+
+  res.json({ success: true });
 };
 
 
 export const AddFollowUp = async (req, res) => {
   try {
     const { id } = req.params;
-    const { purpose,
-      visitNote, nextMeetingDate, nextMeetingTime, nextFollowUpDate,
+    const {
+      purpose,
+      visitNote,
+      nextMeetingDate,
+      nextMeetingTime,
+      nextFollowUpDate,
       nextFollowUpTime,
-      nextFollowUpNote, } = req.body;
+      nextFollowUpNote,
+    } = req.body;
 
-    const meeting = await MeetingDataModule.findById(id);
+    const meeting = await MeetingDataModule.findById(req.params.id);
     if (!meeting) {
       return res.status(404).json({ msg: "Meeting not found" });
     }
+
+      const followUpDT = new Date(
+    `${nextFollowUpDate}T${nextFollowUpTime}:00`
+  );
 
     meeting.followUp = {
       purpose,
       visitNote,
       nextMeetingDate,
       nextMeetingTime,
-     nextFollowUp: {
+      nextFollowUp: {
         date: nextFollowUpDate || null,
         time: nextFollowUpTime || null,
         note: nextFollowUpNote || null,
       },
+      followupemail1DaySent: false,
+    followupemail1HourSent: false,
     };
 
+     meeting.followUpDateTime = followUpDT;
     meeting.status = "completed";
 
     await meeting.save();
+
+    await sendFollowUpEmail(meeting.userEmail, meeting);
 
     res.json({
       success: true,

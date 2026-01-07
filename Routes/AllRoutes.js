@@ -17,7 +17,6 @@ import {
   GetLeadId,
   updateLead,
 } from "../API/LeadApi.js";
-import { Subscription } from "../API/subscriptionApi.js";
 import { getUserProfile, Login, Registration } from "../API/Login/LoginApi.js";
 import AuthMiddleware from "../API/Login/AuthMiddleware.js";
 
@@ -42,10 +41,6 @@ Route.get("/getbyidmeeting/:id", AuthMiddleware, GetMeetingId);
 Route.put("/updatemeeting/:id", AuthMiddleware, updateMeeting);
 Route.delete("/deletemeeting/:id", AuthMiddleware, DeleteMeeting);
 
-/* .........................
-Subscription Route
-.......................... */
-Route.post("/save-subscription", Subscription);
 
 Route.put("/reschedule-meeting/:id", RescheduleMeeting);
 Route.put("/followup-meeting/:id", AddFollowUp);

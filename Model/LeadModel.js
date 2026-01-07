@@ -9,9 +9,9 @@ const leadSchema = new mongoose.Schema(
     },
     area: { type: String, required: true },
     companyname: { type: String, required: true },
-    companyphone: { type: Number },
+    companyphone: { type: Number, default: "-" },
     ownerName: { type: String, required: true },
-    ownerphone: { type: Number },
+    ownerphone: { type: Number, default: "-" },
     domain: {
       type: String,
       enum: ["Construction", "Education", "Healthcare", "Other"],
