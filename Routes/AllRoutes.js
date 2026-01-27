@@ -17,7 +17,7 @@ import {
   GetLeadId,
   updateLead,
 } from "../API/LeadApi.js";
-import { getUserProfile, Login, Registration } from "../API/Login/LoginApi.js";
+import { getUserProfile, Login, Logout, Registration } from "../API/Login/LoginApi.js";
 import AuthMiddleware from "../API/Login/AuthMiddleware.js";
 
 const Route = express.Router();
@@ -47,6 +47,7 @@ Route.put("/followup-meeting/:id", AddFollowUp);
 
 Route.post("/register", Registration);
 Route.post("/login", Login);
+Route.post("/logout", AuthMiddleware, Logout)
 Route.get("/getuser", AuthMiddleware, getUserProfile);
 
 

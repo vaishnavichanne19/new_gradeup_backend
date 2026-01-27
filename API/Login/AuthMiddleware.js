@@ -1,31 +1,35 @@
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv"
+import dotenv from "dotenv";
+import { TokenModel } from "../../Model/TokenModel.js";
 dotenv.config();
 
-const AuthMiddleware = (req, res, next) => {
+const AuthMiddleware = async(req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
-    if (!authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Invalid token format" });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     const token = authHeader.split(" ")[1];
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-     req.user =  {
-  userId: decoded.userId,
-  email: decoded.email, 
-};
+     const validToken = await TokenModel.findOne({ token, isActive: true });
+    if (!validToken) {
+      return res.status(401).json({ message: "Session expired" });
+    }
+
+    req.user = {
+      userId: decoded.userId,
+      email: decoded.email,
+    };
     next();
   } catch (error) {
-    console.error("JWT Error:", error.message);
-    return res.status(401).json({ message: "Invalid or expired token" });
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Token expired" });
+    }
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
 

@@ -3,6 +3,7 @@ dotenv.config();
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { LoginModule } from "../../Model/LoginModel.js";
+import { TokenModel } from "../../Model/TokenModel.js";
 
 
 // REGISTER
@@ -46,7 +47,9 @@ export const Login = async (req, res) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) return res.status(400).json({ error: "Incorrect Password" });
 
-  const token = jwt.sign({ userId: user._id, email: user.email, }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  const token = jwt.sign({ userId: user._id, email: user.email, }, process.env.JWT_SECRET);
+  await TokenModel.create({userId: user._id, token});
+  
   res.cookie("token", token, {
     httpOnly: true,
     maxAge: 86400000,
@@ -66,6 +69,17 @@ export const Login = async (req, res) => {
       success: false,
     });
   }
+};
+
+export const Logout = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.split(" ")[1];
+
+  if (!token) return res.status(400).json({ message: "No token provided" });
+
+  await TokenModel.updateOne({ token }, { isActive: false });
+
+  res.json({ success: true, message: "Logged out successfully" });
 };
 
 
