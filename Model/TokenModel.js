@@ -1,4 +1,3 @@
-// Model/TokenModel.js
 import mongoose from "mongoose";
 
 const TokenSchema = new mongoose.Schema({

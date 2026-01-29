@@ -95,3 +95,17 @@ export const getUserProfile = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+export const getAllUser = async (req, res) => {
+  try {
+    const user = await LoginModule.find();
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};

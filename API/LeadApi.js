@@ -12,33 +12,51 @@ export const createLead = async (req, res) => {
       domain,
       customDomain,
       marketingType,
+      locationtype,
+      address,
+      lat,
+      lng,
       marketingOptions,
     } = req.body;
 
-    const LeadId = new LeadModuleData({
-      area: area.trim(),
-      companyname: companyname.trim(),
-      companyphone,
-      ownerName: ownerName.trim(),
-      ownerphone,
-      domain,
-      customDomain: domain === "Other" ? customDomain : "",
-      marketingType,
-      marketingOptions,
-      userId: req.user.userId,
-    });
-
-    if (!LeadId) {
-      res.status(404).json({ msg: "Data not found" });
+    if (!lat || !lng) {
+      return res.status(400).json({ msg: "Location data missing" });
     }
-    await LeadId.save();
-    res
-      .status(200)
-      .json({ message: "Lead Data added successfully", data: LeadId });
+
+const lead = new LeadModuleData({
+  area: area?.trim(),
+  companyname: companyname?.trim(),
+  companyphone,
+  ownerName: ownerName?.trim(),
+  ownerphone,
+  domain,
+  customDomain: domain === "Other" ? customDomain : "",
+  marketingType,
+  marketingOptions,
+
+  location: {
+    lat: Number(lat),
+    lng: Number(lng),
+    address,
+    locationtype,
+  },
+
+  userId: req.user.userId,
+});
+
+
+    await lead.save();
+
+    res.status(200).json({
+      message: "Lead Data added successfully",
+      data: lead,
+    });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 export const GetLead = async (req, res) => {
   try {

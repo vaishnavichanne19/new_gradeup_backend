@@ -58,7 +58,7 @@ export const GetAllUserMeeting = async (req, res) => {
     const Meeting = await MeetingDataModule.find().populate(
       "userId",
       "username email"
-    );
+    ).populate("leadId", "area");
 
     if (!Meeting) {
       return res.status(404).json({ msg: "Data Not Found" });
@@ -74,7 +74,7 @@ export const GetMeeting = async (req, res) => {
     const Meeting = await MeetingDataModule.find({
       userId: req.user.userId,
     })
-      .populate("leadId", "companyname area domain")
+      .populate("leadId", "companyname area location")
       .sort({ created_at: -1 });
     if (!Meeting) {
       return res.status(404).json({ msg: "Data Not Found" });
@@ -86,18 +86,18 @@ export const GetMeeting = async (req, res) => {
 };
 
 export const GetMeetingId = async (req, res) => {
-  const id = req.params.id;
+  const {id} = req.params;
 
   try {
     const MeetingId = await MeetingDataModule.findOne({
-      _id: req.params.id,
+      _id: id,
       userId: req.user.userId,
     });
 
     if (!MeetingId) {
       return res.status(404).json({ msg: "user data not found" });
     }
-    res.status(200).json({ data: MeetingId });
+    res.status(200).json({success: true, message:"Get All Data", data: MeetingId });
   } catch (error) {
     console.error("Error fetching Meeting:", error);
     res
@@ -105,6 +105,35 @@ export const GetMeetingId = async (req, res) => {
       .json({ success: false, message: "Server error", error: error.message });
   }
 };
+
+// export const updateMeeting = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const meetingdata = await MeetingDataModule.findById(id);
+//     if (!meetingdata) {
+//       return res
+//         .status(404)
+//         .json({ success: false, msg: "User Data not found" });
+//     }
+
+//     const Updatemeetingdata = await MeetingDataModule.findByIdAndUpdate(
+//       { _id: req.params.id, userId: req.user.userId },
+//       req.body,
+//       { new: true }
+//     );
+//     res.status(200).json({
+//       success: true,
+//       data: Updatemeetingdata,
+//       msg: "User updated successfully",
+//     });
+//   } catch (error) {
+//     console.error("Error updating Meeting:", error);
+//     res
+//       .status(500)
+//       .json({ success: false, message: "Server error", error: error.message });
+//   }
+// };
+
 
 export const updateMeeting = async (req, res) => {
   try {
@@ -118,9 +147,12 @@ export const updateMeeting = async (req, res) => {
 
     const Updatemeetingdata = await MeetingDataModule.findByIdAndUpdate(
       { _id: req.params.id, userId: req.user.userId },
-      req.body,
+       {
+        ...req.body,
+        status: "rescheduled",
+      },
       { new: true }
-    );
+    ).populate("leadId", "area");
     res.status(200).json({
       success: true,
       data: Updatemeetingdata,
@@ -234,6 +266,33 @@ export const AddFollowUp = async (req, res) => {
     res.json({
       success: true,
       message: "Follow-up added successfully",
+      data: meeting,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+export const ConfirmMeeting = async (req, res) => {
+ try {
+    const { id } = req.params;
+    const {
+     completemsg
+    } = req.body;
+
+    const meeting = await MeetingDataModule.findById(id).populate("leadId", "area");
+    if (!meeting) {
+      return res.status(404).json({ msg: "Meeting not found" });
+    }
+
+    meeting.completemsg = completemsg;
+    meeting.status = "completed";
+
+    await meeting.save();
+    res.json({
+      success: true,
+      message: "Meeting Completed successfully",
       data: meeting,
     });
   } catch (error) {
