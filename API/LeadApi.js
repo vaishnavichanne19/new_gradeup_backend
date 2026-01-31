@@ -116,6 +116,35 @@ export const GetLeadId = async (req, res) => {
   }
 };
 
+
+export const GetAllLeadId = async (req, res) => {
+
+  try {
+   const Lead = await LeadModuleData.findOne({
+  _id: req.params.id,
+}).populate("userId", "username email");
+
+
+    if (!Lead) {
+      return res.status(404).json({
+        success: false,
+        message: "User data not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: Lead,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
 export const updateLead = async (req, res) => {
   try {
     const { id } = req.params;

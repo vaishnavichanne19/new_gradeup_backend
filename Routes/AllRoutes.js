@@ -4,6 +4,7 @@ import {
   ConfirmMeeting,
   CreateMeeting,
   DeleteMeeting,
+  GetAllMeetingId,
   GetAllUserMeeting,
   GetMeeting,
   GetMeetingId,
@@ -13,6 +14,7 @@ import {
 import {
   createLead,
   deleteLead,
+  GetAllLeadId,
   GetAllUserLead,
   GetLead,
   GetLeadId,
@@ -43,6 +45,7 @@ Route.post("/addlead", AuthMiddleware, createLead);
 Route.get("/getalllead", AuthMiddleware, GetLead);
 Route.get("/getalluserlead", GetAllUserLead);
 Route.get("/getbyidlead/:id", AuthMiddleware, GetLeadId);
+Route.get("/getallleadid/:id",  GetAllLeadId);
 Route.put("/updatelead/:id", AuthMiddleware, updateLead);
 Route.delete("/deletelead/:id", AuthMiddleware, deleteLead);
 
@@ -53,6 +56,7 @@ Route.post("/addmeeting", AuthMiddleware, CreateMeeting);
 Route.get("/getallmeeting", AuthMiddleware, GetMeeting);
 Route.get("/getallusermeeting", GetAllUserMeeting);
 Route.get("/getbyidmeeting/:id", AuthMiddleware, GetMeetingId);
+Route.get("/getallmeetingid/:id", GetAllMeetingId);
 Route.put("/updatemeeting/:id", AuthMiddleware, updateMeeting);
 Route.delete("/deletemeeting/:id", AuthMiddleware, DeleteMeeting);
 

@@ -106,6 +106,31 @@ export const GetMeetingId = async (req, res) => {
   }
 };
 
+
+export const GetAllMeetingId = async (req, res) => {
+  const {id} = req.params;
+
+  try {
+    const MeetingId = await MeetingDataModule.findOne({
+      _id: id
+    }).populate(
+      "userId",
+      "username email"
+    ).populate("leadId", "area");
+
+    if (!MeetingId) {
+      return res.status(404).json({ msg: "user data not found" });
+    }
+    res.status(200).json({success: true, message:"Get All Data", data: MeetingId });
+  } catch (error) {
+    console.error("Error fetching Meeting:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+
 // export const updateMeeting = async (req, res) => {
 //   try {
 //     const { id } = req.params;
