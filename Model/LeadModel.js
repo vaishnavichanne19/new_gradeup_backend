@@ -10,7 +10,7 @@ const leadSchema = new mongoose.Schema(
     area: { type: String, required: true },
     companyname: { type: String, required: true },
     companyphone: { type: Number },
-    ownerName: { type: String, required: true },
+    ownerName: { type: String },
     ownerphone: { type: Number },
     domain: {
       type: String,
@@ -32,19 +32,16 @@ const leadSchema = new mongoose.Schema(
     location: {
       locationtype: {
         type: String,
-        enum: ["live", "manual"],
-        required: true
+        enum: ["live", "manual"]
       },
      address: {
         type: String,
       },
       lat: {
         type: Number,
-        required: true,
       },
       lng: {
         type: Number,
-        required: true,
       },
     },
   },

@@ -19,9 +19,6 @@ export const createLead = async (req, res) => {
       marketingOptions,
     } = req.body;
 
-    if (!lat || !lng) {
-      return res.status(400).json({ msg: "Location data missing" });
-    }
 
 const lead = new LeadModuleData({
   area: area?.trim(),
