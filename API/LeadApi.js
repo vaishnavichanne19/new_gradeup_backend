@@ -31,12 +31,15 @@ const lead = new LeadModuleData({
   marketingType,
   marketingOptions,
 
-  location: {
-    lat: Number(lat),
-    lng: Number(lng),
-    address,
-    locationtype,
-  },
+  location: lat && lng
+  ? {
+      lat: Number(lat),
+      lng: Number(lng),
+      address: address || "",
+      locationtype: locationtype || "manual",
+    }
+  : undefined,
+
 
   userId: req.user.userId,
 });
