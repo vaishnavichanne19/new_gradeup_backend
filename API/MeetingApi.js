@@ -19,9 +19,6 @@ export const CreateMeeting = async (req, res) => {
       msg,
     } = req.body;
 
-    if (!leadId || !date || !time) {
-      return res.status(400).json({ error: "Required fields missing" });
-    }
 
     const meetingDateTime = new Date(`${date}T${time}:00`);
 
@@ -303,9 +300,6 @@ export const CreateAllMeeting = async (req, res) => {
       msg,
     } = req.body;
 
-    if (!leadId || !date || !time) {
-      return res.status(400).json({ error: "Required fields missing" });
-    }
 
     const meetingDateTime = new Date(`${date}T${time}:00`);
 

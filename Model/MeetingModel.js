@@ -126,11 +126,9 @@ const meetingSchema = new mongoose.Schema(
     },
     tution_name: {
       type: String,
-      required: true,
     },
     owner_name: {
       type: String,
-      required: true,
     },
     owner_no: {
       type: String,
@@ -143,20 +141,16 @@ const meetingSchema = new mongoose.Schema(
     },
     date: {
       type: Date,
-      required: true,
     },
     time: {
       type: String,
-      required: true,
     },
     meetingDateTime: {
       type: Date,
-      required: true,
       index: true,
     },
     msg: {
       type: String,
-      required: true,
     },
     status: {
       type: String,
